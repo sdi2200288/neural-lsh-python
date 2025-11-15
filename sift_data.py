@@ -1,16 +1,17 @@
+# sift_data.py
+
 import struct
-import numpy as np
 from typing import List
 
-def read_sift_file(filename: str, max_vectors: int = 1000) -> List[List[float]]:
+def read_sift_file(filename: str) -> List[List[float]]:
     """
     Βασική συνάρτηση που κάνει ανάγνωση τα SIFT αρχεία
     """
     try:
         with open(filename, 'rb') as file:
             data = []
-            
-            while len(data) < max_vectors:
+
+            while True:
                 # Ανάγνωση διάστασης
                 dimension_bytes = file.read(4)
                 if not dimension_bytes:
@@ -31,6 +32,10 @@ def read_sift_file(filename: str, max_vectors: int = 1000) -> List[List[float]]:
                 # Μετατροπή bytes σε list of floats
                 vector = list(struct.unpack(f'{d}f', vector_bytes))
                 data.append(vector)
+
+                #για testing
+                if len(data) >= 1000:
+                    break
             
             # print(f"Loaded {len(data)} SIFT vectors")
             return data
