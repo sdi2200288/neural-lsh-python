@@ -1,2 +1,4 @@
 source nlsh_env/bin/activate
 source erg2_env/bin/activate
+
+deactivate
