@@ -57,8 +57,8 @@ def read_mnist_query(filename: str) -> List[List[float]]:
     """
     return read_mnist_file(filename)
 
-def return_mnist_queries(query_file: str) -> List[List[float]]:
-    """
-    Συνάρτηση για επιστροφή MNIST queries
-    """
-    return read_mnist_query(query_file)
+# def return_mnist_queries(query_file: str) -> List[List[float]]:
+#     """
+#     Συνάρτηση για επιστροφή MNIST queries
+#     """
+#     return read_mnist_query(query_file)
