@@ -70,15 +70,22 @@ if __name__ == "__main__":
     try:
         # You'll need to replace with actual file paths
         mnist_data = return_data("mnist_data/train-images-idx3-ubyte", "mnist")
-        sift_data = return_data("sift/sift_base.fvecs", "sift")
+        sift_data = return_data("sift_data/sift_base.fvecs", "sift")
         print("Parser ready!")
         # print(f"MNIST data shape: {mnist_data.shape}")
         print(f"MNIST data: {len(mnist_data)} images")
         # print(f"SIFT data shape: {sift_data.shape}")
         print(f"SIFT data: {len(sift_data)} vectors")
 
-        for i in range(len(sift_data[0])):
-            print(f"{sift_data[0][i]}")
+        # for i in range(len(sift_data[0])):
+        #     print(sift_data[0][i])
+        print("\nΠρώτο SIFT vector:")
+        sift_values = [f"{x}" for x in sift_data[0]]
+        print(" ".join(sift_values))
+
+        print("\nΠρώτο MNNIST vector:")
+        mnist_values = [f"{x}" for x in mnist_data[0]]
+        print(" ".join(mnist_values))
 
         # for i in range(len(mnist_data[0])):
         #     print(f"{mnist_data[0][i]}")
