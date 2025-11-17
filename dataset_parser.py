@@ -76,6 +76,12 @@ if __name__ == "__main__":
         print(f"MNIST data: {len(mnist_data)} images")
         # print(f"SIFT data shape: {sift_data.shape}")
         print(f"SIFT data: {len(sift_data)} vectors")
+
+        for i in range(len(sift_data[0])):
+            print(f"{sift_data[0][i]}")
+
+        # for i in range(len(mnist_data[0])):
+        #     print(f"{mnist_data[0][i]}")
         
     except Exception as e:
         print(f"Error: {e}")
