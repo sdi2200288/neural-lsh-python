@@ -55,9 +55,3 @@ def read_sift_query(filename: str) -> List[List[float]]:
     Συνάρτηση για ανάγνωση SIFT queries
     """
     return read_sift_file(filename)
-
-# def return_sift_queries(query_file: str) -> List[List[float]]:
-#     """
-#     Συνάρτηση για επιστροφή SIFT queries
-#     """
-#     return read_sift_query(query_file)  # "../sift/sift_query.fvecs"
