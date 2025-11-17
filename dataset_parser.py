@@ -50,10 +50,17 @@ def read_sift_vectors(filename):
 # Test functions
 if __name__ == "__main__":
     # Test with a small file first
+    print("Testing MNIST parser...")
     try:
-        # You'll need to replace with actual file paths
-        # mnist_data = read_mnist_images("train-images.idx3-ubyte")
-        # sift_data = read_sift_vectors("sift_base.fvecs")
-        print("Parser ready!")
+        # ΠΡΟΣΟΧΗ: Άλλαξε τα paths αν τα αρχεία σου είναι αλλού
+        mnist_data = read_mnist_images("mnist_data/train-images-idx3-ubyte")
+        print(f"MNIST data shape: {mnist_data.shape}")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"MNIST error: {e}")
+    
+    print("\nTesting SIFT parser...")
+    try:
+        sift_data = read_sift_vectors("sift/sift_base.fvecs")
+        print(f"SIFT data shape: {sift_data.shape}")
+    except Exception as e:
+        print(f"SIFT error: {e}")
