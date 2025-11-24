@@ -38,14 +38,15 @@ def build_knn_graph(args):
     print(">> Building k-NN graph with IVFFlat executable...")
 
     cmd = [
+        "valgrind", "--leak-check=full", "--show-leak-kinds=all",
         "./../../Project/Project/search",
+        "-ivfflat_knn",
         "-d", args.dataset,
-        "-q", args.dataset,
         "-type", args.type,
         "--knn", str(args.knn),
-        "-ivfflat", 
-        "-o", "knn_output.txt",
-        "-N", str(args.knn) 
+        "-kclusters", "14",
+        "-nprobe", "2",
+        "-o", "knn_output.txt"
     ]
 
     subprocess.run(cmd, check=True)
@@ -63,7 +64,7 @@ def build_knn_graph(args):
     print(">> Finished running IVFFlat, reading knn_output.txt")
     return read_knn_graph("knn_output.txt")
 
-def read_knn_graph(filename):
+###def read_knn_graph(filename):
     """Διαβάζει τον k-NN γράφο αποφεύγοντας self-loops"""
     graph = {}
     
@@ -94,6 +95,19 @@ def read_knn_graph(filename):
         else:
             i += 1
     
+    return graph
+
+def read_knn_graph(filename):
+    graph = {}
+    with open(filename) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            node, neighs = line.split(":")
+            node = int(node)
+            neigh_list = neighs.strip().split()
+            graph[node] = [int(n) for n in neigh_list]
     return graph
 
 # -------------------------------------------------------------
