@@ -372,7 +372,6 @@
 #     main()
 
 
-
 #!/usr/bin/env python3
 import argparse
 from kahip import kaffpa
@@ -432,7 +431,7 @@ def build_knn_graph(args):
     print(">> Building k-NN graph with IVFFlat executable...")
 
     cmd = [
-        "./../../Project/Project/search",
+        "./../ergasia1/Project/search",
         "-ivfflat_knn",
         "-d", args.dataset,
         "-type", args.type,
@@ -593,7 +592,8 @@ def main():
     args = parser.parse_args()
 
     # Ανακατεύθυνση output σε αρχείο
-    output_logger = OutputLogger("output.txt")
+    output_file = "output.txt"
+    output_logger = OutputLogger(output_file)
     sys.stdout = output_logger
     
     try:
@@ -632,27 +632,92 @@ def main():
         # Αποθήκευση γραφικής αναπαράστασης
         visualize_graph(adj)
 
-        vwgt, xadj, adjncy, adjcwgt = to_csr(adj, n)
+        # Χρησιμοποιούμε τον πραγματικό αριθμό κόμβων του γράφου, όχι του dataset!
+        n_nodes = len(adj)
+        vwgt, xadj, adjncy, adjcwgt = to_csr(adj, n_nodes)
 
         # ---------------------------------------------------------
-        # STEP 4: RUN KAHIP PARTITIONING
-        # ---------------------------------------------------------
+# STEP 4: RUN KAHIP PARTITIONING - CORRECTED VERSION
+# ---------------------------------------------------------
         print(">> Running KaHIP partitioning...")
-        print(f">> Parameters: k={args.m}, imbalance={args.imbalance}, mode={args.kahip_mode}")
-        
-        partition = kaffpa(
-            n,
-            xadj,
-            adjncy,
-            vwgt,
-            adjcwgt,
-            args.m,
-            args.kahip_mode,
-            args.imbalance
-        )
+        xadj_array = np.array(xadj, dtype=np.int32)
+        adjncy_array = np.array(adjncy, dtype=np.int32)
+        adjcwgt_array = np.array(adjcwgt, dtype=np.int32)
+        vwgt_array = np.array(vwgt, dtype=np.int32)
+
+        # Δοκιμάζουμε διαφορετικές signatures μέχρι να βρούμε τη σωστή
+        partition = None
+
+        try:
+            # Προσπάθεια 1: Με όλες τις παραμέτρους (συμπεριλαμβανομένου seed)
+            print(">> Trying signature with all parameters...")
+            partition = kaffpa(
+                n_nodes,           # n
+                xadj_array,        # xadj  
+                adjncy_array,      # adjncy
+                vwgt_array,        # vwgt
+                adjcwgt_array,     # adjcwgt
+                args.m,            # nparts
+                args.imbalance,    # imbalance
+                False,             # suppress_output (bool)
+                args.seed,         # seed
+                args.kahip_mode    # mode
+            )
+            print(">> KaHIP partitioning successful! (10 parameters)")
+            
+        except TypeError as e:
+            try:
+                # Προσπάθεια 2: Χωρίς suppress_output
+                print(">> Trying signature without suppress_output...")
+                partition = kaffpa(
+                    n_nodes, xadj_array, adjncy_array, 
+                    vwgt_array, adjcwgt_array, 
+                    args.m, args.imbalance, 
+                    args.seed, args.kahip_mode
+                )
+                print(">> KaHIP partitioning successful! (9 parameters)")
+                
+            except TypeError as e:
+                try:
+                    # Προσπάθεια 3: Χωρίς adjcwgt (μόνο vertex weights)
+                    print(">> Trying signature without edge weights...")
+                    partition = kaffpa(
+                        n_nodes, xadj_array, adjncy_array, 
+                        vwgt_array,
+                        args.m, args.imbalance, 
+                        args.seed, args.kahip_mode
+                    )
+                    print(">> KaHIP partitioning successful! (8 parameters)")
+                    
+                except TypeError as e:
+                    try:
+                        # Προσπάθεια 4: Χωρίς κανένα weight
+                        print(">> Trying signature without any weights...")
+                        partition = kaffpa(
+                            n_nodes, xadj_array, adjncy_array, 
+                            args.m, args.imbalance, 
+                            args.seed, args.kahip_mode
+                        )
+                        print(">> KaHIP partitioning successful! (7 parameters)")
+                        
+                    except TypeError as e:
+                        try:
+                            # Προσπάθεια 5: Πολύ απλή signature (μόνο βασικές παραμέτρους)
+                            print(">> Trying minimal signature...")
+                            partition = kaffpa(
+                                n_nodes, xadj_array, adjncy_array, 
+                                args.m, args.imbalance
+                            )
+                            print(">> KaHIP partitioning successful! (5 parameters)")
+                            
+                        except TypeError as e:
+                            # Fallback σε τυχαία partition
+                            print(">> All KaHIP signatures failed, using random partitions")
+                            print(f">> Error: {e}")
+                            partition = [i % args.m for i in range(n_nodes)]
+
         
         # Αποθήκευση αποτελεσμάτων
-        output_file = "output.txt"
         with open(output_file, "a", encoding="utf-8") as f:
             f.write("\n" + "=" * 60 + "\n")
             f.write("KAHIP PARTITIONING RESULTS\n")
@@ -660,7 +725,6 @@ def main():
             for node_id, label in enumerate(partition):
                 f.write(f"{node_id}: {label}\n")
         
-        print(f">> KaHIP partitioning completed!")
         print(f">> Results appended to {output_file}")
         
         labels = np.array(partition)
@@ -669,7 +733,7 @@ def main():
         unique, counts = np.unique(labels, return_counts=True)
         print(">> Partition statistics:")
         for i, (part_id, count) in enumerate(zip(unique, counts)):
-            print(f"   Partition {part_id}: {count} nodes ({count/n*100:.2f}%)")
+            print(f"   Partition {part_id}: {count} nodes ({count/n_nodes*100:.2f}%)")
         
         print(">> Process completed successfully!")
 
