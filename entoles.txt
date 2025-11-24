@@ -1,4 +1,5 @@
 source nlsh_env/bin/activate
 source erg2_env/bin/activate
+python3 nlsh_build.py -d sift_data/sift_base.fvecs -i nlsh_index -type sift --knn 15 > text.txt 2>&1
 
 deactivate
