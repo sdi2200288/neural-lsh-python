@@ -391,13 +391,13 @@ def build_knn_graph(args):
     print(">> Building k-NN graph with IVFFlat executable...")
 
     cmd = [
-        "./../ergasia1/Project/search",
+        "./../../Project/Project/search",
         "-ivfflat_knn", 
         "-d", args.dataset,
         "-type", args.type,
         "--knn", str(args.knn),
-        "-kclusters", "14",
-        "-nprobe", "2",
+        "-kclusters", "100",
+        "-nprobe", "7",
         "-o", "knn_output.txt"
     ]
 
