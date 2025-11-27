@@ -357,6 +357,29 @@ class OutputLogger:
 # 1. LOAD DATASET (MNIST / SIFT)
 # -------------------------------------------------------------
 def load_dataset(path, dtype):
+    print(f">> DEBUG: Loading dataset from '{path}'")
+    print(f">> DEBUG: File exists: {os.path.exists(path)}")
+    print(f">> DEBUG: Current directory: {os.getcwd()}")
+
+    print(f">> Attempting to load dataset from: {path}")
+    print(f">> File exists: {os.path.exists(path)}")
+    
+    if not os.path.exists(path):
+        # Δοκίμασε να βρεις το αρχείο
+        possible_paths = [
+            path,
+            f"../{path}",
+            f"../../{path}",
+            f"sift_data/{os.path.basename(path)}",
+            f"../sift_data/{os.path.basename(path)}"
+        ]
+        for p in possible_paths:
+            if os.path.exists(p):
+                print(f">> DEBUG: Found file at: {p}")
+                path = p
+                break
+        else:
+            raise FileNotFoundError(f"Dataset file not found: {path}")
     if dtype == "sift":
         return load_fvecs(path)
     elif dtype == "mnist":
@@ -387,46 +410,115 @@ def load_mnist(path):
 # -------------------------------------------------------------
 # 2. CALL THE C++ ivfflat_knn EXECUTABLE TO GENERATE GRAPH
 # -------------------------------------------------------------
-def build_knn_graph(args):
-    print(">> Building k-NN graph with IVFFlat executable...")
+# def build_knn_graph(args):
+#     print(">> Building k-NN graph with IVFFlat executable...")
 
-    cmd = [
-        "./../../Project/Project/search",
-        "-ivfflat_knn", 
-        "-d", args.dataset,
-        "-type", args.type,
-        "--knn", str(args.knn),
-        "-kclusters", "100",
-        "-nprobe", "7",
-        "-o", "knn_output.txt"
-    ]
+#     cmd = [
+#         "./../../Project/Project/search",
+#         "-bruteforce_knn", 
+#         "-d", args.dataset,
+#         "-type", args.type,
+#         "--knn", str(args.knn),
+#         # "-kclusters", "100",
+#         # "-nprobe", "7",
+#         "-o", "knn_output.txt"
+#     ]
 
-    subprocess.run(cmd, check=True)
+#     subprocess.run(cmd, check=True)
 
-    if not os.path.exists("knn_output.txt"):
-        raise RuntimeError("knn_output.txt was not created. Check that the executable ran correctly.")
+#     if not os.path.exists("knn_output.txt"):
+#         raise RuntimeError("knn_output.txt was not created. Check that the executable ran correctly.")
     
-    print(">> First 10 lines of knn_output.txt:")
+#     print(">> First 10 lines of knn_output.txt:")
+#     with open("knn_output.txt") as f:
+#         for i, line in enumerate(f):
+#             if i < 10:
+#                 print(f"Line {i}: {line.strip()}")
+#             else:
+#                 break 
+#     print(">> Finished running IVFFlat, reading knn_output.txt")
+#     return read_knn_graph("knn_output.txt")
+
+# def read_knn_graph(filename):
+#     graph = {}
+#     with open(filename) as f:
+#         for line in f:
+#             line = line.strip()
+#             if not line:
+#                 continue
+#             node, neighs = line.split(":")
+#             node = int(node)
+#             neigh_list = neighs.strip().split()
+#             graph[node] = [int(n) for n in neigh_list]
+#     return graph
+
+def build_knn_graph(args, method="bruteforce"):
+    """Build k-NN graph using specified method"""
+    print(f">> Building k-NN graph with {method.upper()} method...")
+    
+    if method == "bruteforce":
+        cmd = [
+           "./../../Project/Project/search",  # ή η διαδρομή προς το C++ executable σου
+            "-bruteforce_knn", 
+            "-d", args.dataset,
+            "-type", args.type,
+            "--knn", str(args.knn),
+            "-o", "knn_output.txt"
+        ]
+    elif method == "ivfflat":
+        cmd = [
+           "./../../Project/Project/search",
+            "-ivfflat_knn", 
+            "-d", args.dataset,
+            "-type", args.type,
+            "--knn", str(args.knn),
+            "-kclusters", "100",  # παράμετροι για IVFFlat
+            "-nprobe", "5", 
+            "-o", "knn_output.txt"
+        ]
+    else:
+        raise ValueError(f"Unknown method: {method}")
+    
+    print(f">> Running: {' '.join(cmd)}")
+    
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        print(f">> Command output: {result.stdout}")
+        if result.stderr:
+            print(f">> Command stderr: {result.stderr}")
+    except subprocess.CalledProcessError as e:
+        print(f">> ERROR: Command failed with return code {e.returncode}")
+        print(f">> stderr: {e.stderr}")
+        raise
+    
+    # Έλεγχος και ανάγνωση output
+    if not os.path.exists("knn_output.txt"):
+        raise RuntimeError("knn_output.txt was not created")
+    
+    print(">> First 5 lines of knn_output.txt:")
     with open("knn_output.txt") as f:
         for i, line in enumerate(f):
-            if i < 10:
+            if i < 5:
                 print(f"Line {i}: {line.strip()}")
             else:
-                break 
-    print(">> Finished running IVFFlat, reading knn_output.txt")
+                break
+    
     return read_knn_graph("knn_output.txt")
 
 def read_knn_graph(filename):
+    """Read kNN graph from file"""
     graph = {}
     with open(filename) as f:
         for line in f:
             line = line.strip()
             if not line:
                 continue
-            node, neighs = line.split(":")
-            node = int(node)
-            neigh_list = neighs.strip().split()
-            graph[node] = [int(n) for n in neigh_list]
+            if ':' not in line:
+                continue
+            node, neighbors = line.split(":", 1)
+            node = int(node.strip())
+            neighbors = [int(n.strip()) for n in neighbors.strip().split()]
+            graph[node] = neighbors
     return graph
 
 # -------------------------------------------------------------
@@ -639,6 +731,8 @@ def main():
     parser.add_argument("--lr", type=float, default=0.001)
 
     parser.add_argument("--seed", type=int, default=1)
+    # Στο argparse του nlsh_build.py
+    parser.add_argument("--knn_method", choices=["bruteforce", "ivfflat"], default="bruteforce")
 
     args = parser.parse_args()
 
@@ -664,7 +758,8 @@ def main():
         print(f">> Dataset loaded: {n} vectors, {d} dimensions")
 
         # STEP 2: BUILD kNN GRAPH USING C++
-        knn_graph = build_knn_graph(args)
+        # knn_graph = build_knn_graph(args)
+        knn_graph = build_knn_graph(args, method=args.knn_method)
         print(f">> k-NN graph built with {len(knn_graph)} nodes")
 
         # STEP 3: PREPARE GRAPH FOR KAHIP 
@@ -727,7 +822,7 @@ def main():
         # Υποθέτουμε ότι οι κόμβοι του γράφου αντιστοιχούν 1-1 με τα σημεία του dataset
         if n_nodes != n:
             print(f"WARNING: Graph has {n_nodes} nodes but dataset has {n} points")
-            print(">> Using first {n_nodes} points for training")
+            print(f">> Using first {n_nodes} points for training")
             # Χρησιμοποιούμε μόνο τα σημεία που έχουν partition labels
             X_data = data[:n_nodes]
             y_labels = partition
