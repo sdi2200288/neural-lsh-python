@@ -106,7 +106,10 @@ def main():
     print(">> Loading Neural LSH index...")
     model, inv_file = load_index(args.index_path)
 
+if __name__ == "__main__":
+    main()
 
+    
 # # Step 2
 # logits = model(q)
 # probs = softmax(logits)
