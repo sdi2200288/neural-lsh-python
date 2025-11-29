@@ -140,7 +140,7 @@ def main():
     queries = load_dataset(args.query_file, args.data_type)
     print(f">> Queries loaded: {queries.shape[0]} vectors")
 
-    # STEP 1: LOAD INDEX
+    # LOAD INDEX
     print(">> Loading Neural LSH index...")
     model, inv_file = load_index(args.index_path)
 
@@ -160,10 +160,12 @@ def main():
     # ΠΡΟΣΘΗΚΗ: Έλεγχος softmax
     print("\n>> Softmax verification for first query:")
 
+    # Για καθε query
     for query_idx, query_vector in enumerate(queries):
         if query_idx >= 1:  # Μόνο για το πρώτο query για testing
             break
-            
+
+        # Softmax 
         query_tensor = torch.tensor(query_vector, dtype=torch.float32).unsqueeze(0)
         with torch.no_grad():
             raw_output = model(query_tensor)    # fθ(q)
@@ -176,13 +178,13 @@ def main():
         print(f"  Raw output (first 5): {raw_output[0][:5].numpy()}")
         print(f"  Probabilities (first 5): {probabilities[:5].numpy()}")
         
-        # Βασικοί έλεγχοι softmax:
-        print(f"  Sum of all probabilities: {probabilities.sum().item():.6f}")  # Πρέπει να είναι ≈1.0
+        # Ελεγχοι softmax:
+        print(f"  Sum of all probabilities: {probabilities.sum().item():.6f}") 
         print(f"  All probabilities >= 0: {torch.all(probabilities >= 0).item()}")
         print(f"  Max probability: {probabilities.max().item():.4f}")
         print(f"  Min probability: {probabilities.min().item():.4f}")
         
-        # Έλεγχος top-T bins
+        # STEP 2: bins
         T = min(args.T, len(probabilities))
         top_probs, top_indices = torch.topk(probabilities, T)
         print(f"  Top-{T} bins: {top_indices.numpy()}")
@@ -192,7 +194,7 @@ def main():
         top_bins = top_indices.numpy()  
         print(f"  Selected top-{T} bins: {top_bins}")
         
-
+        # STEP 3: Συλλογη υποψηφιων
         candidates = set()
         for bin_id in top_bins:
             if bin_id in inv_file:
