@@ -157,19 +157,37 @@ def main():
     first_layer = model.net[0]
     print(">> First Linear layer weights shape:", first_layer.weight.shape)
 
+    # ΠΡΟΣΘΗΚΗ: Έλεγχος softmax
+    print("\n>> Softmax verification for first query:")
+
+    for query_idx, query_vector in enumerate(queries):
+        if query_idx >= 1:  # Μόνο για το πρώτο query για testing
+            break
+            
+        query_tensor = torch.tensor(query_vector, dtype=torch.float32).unsqueeze(0)
+        with torch.no_grad():
+            raw_output = model(query_tensor)
+            probabilities = F.softmax(raw_output, dim=1).squeeze(0)
+        
+        # ΕΛΕΓΧΟΙ:
+        print(f"Query {query_idx}:")
+        print(f"  Raw output shape: {raw_output.shape}")
+        print(f"  Probabilities shape: {probabilities.shape}")
+        print(f"  Raw output (first 5): {raw_output[0][:5].numpy()}")
+        print(f"  Probabilities (first 5): {probabilities[:5].numpy()}")
+        
+        # Βασικοί έλεγχοι softmax:
+        print(f"  Sum of all probabilities: {probabilities.sum().item():.6f}")  # Πρέπει να είναι ≈1.0
+        print(f"  All probabilities >= 0: {torch.all(probabilities >= 0).item()}")
+        print(f"  Max probability: {probabilities.max().item():.4f}")
+        print(f"  Min probability: {probabilities.min().item():.4f}")
+        
+        # Έλεγχος top-T bins
+        T = min(args.T, len(probabilities))
+        top_probs, top_indices = torch.topk(probabilities, T)
+        print(f"  Top-{T} bins: {top_indices.numpy()}")
+        print(f"  Top-{T} probabilities: {top_probs.numpy()}")
+        print(f"  Sum of top-{T} probabilities: {top_probs.sum().item():.4f}")
 
 if __name__ == "__main__":
     main()
-
-
-# # Step 2
-# logits = model(q)
-# probs = softmax(logits)
-# bins = np.argsort(probs)[-T:]
-
-# # Step 3
-# candidates = []
-# for b in bins:
-#     candidates.extend(inv_file[b])
-
-
