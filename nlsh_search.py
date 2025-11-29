@@ -166,8 +166,8 @@ def main():
             
         query_tensor = torch.tensor(query_vector, dtype=torch.float32).unsqueeze(0)
         with torch.no_grad():
-            raw_output = model(query_tensor)
-            probabilities = F.softmax(raw_output, dim=1).squeeze(0)
+            raw_output = model(query_tensor)    # fθ(q)
+            probabilities = F.softmax(raw_output, dim=1).squeeze(0) # M(q) = softmax(fθ(q))
         
         # ΕΛΕΓΧΟΙ:
         print(f"Query {query_idx}:")
@@ -188,6 +188,17 @@ def main():
         print(f"  Top-{T} bins: {top_indices.numpy()}")
         print(f"  Top-{T} probabilities: {top_probs.numpy()}")
         print(f"  Sum of top-{T} probabilities: {top_probs.sum().item():.4f}")
+
+        top_bins = top_indices.numpy()  
+        print(f"  Selected top-{T} bins: {top_bins}")
+        
+
+        candidates = set()
+        for bin_id in top_bins:
+            if bin_id in inv_file:
+                candidates.update(inv_file[bin_id])
+        candidates = list(candidates)
+        print(f"  Found {len(candidates)} candidate points")
 
 if __name__ == "__main__":
     main()
