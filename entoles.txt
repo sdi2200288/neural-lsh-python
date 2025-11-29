@@ -1,9 +1,14 @@
 source nlsh_env/bin/activate
 source erg2_env/bin/activate
+
+nlsh_build.py
+
 python3 nlsh_build.py -d sift_data/sift_base.fvecs -i nlsh_index -type sift --knn 15 > text.txt 2>&1
-
 python3 nlsh_build1.py -d sift_data/sift_base.fvecs -i nlsh_index -type sift --knn 15 -m 100 --imbalance 0.03 --kahip_mode 2 --seed 1 
-
 python3 nlsh_build1.py -d sift_data/sift_base.fvecs -i nlsh_index -type sift --knn 15 -m 100 --imbalance 0.03 --kahip_mode 2 --layers 3 --nodes 64 --epochs 10 --batch_size 128 --lr 0.001 --seed 1
+
+
+nlsh_search.py
+
 
 deactivate
