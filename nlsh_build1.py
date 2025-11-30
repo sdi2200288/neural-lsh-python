@@ -92,7 +92,7 @@ def build_knn_graph(args, method="bruteforce"):
     
     if method == "bruteforce":
         cmd = [
-           "./../../Project/Project/search",  # ή η διαδρομή προς το C++ executable σου
+           "./../ergasia1/Project/search",  
             "-bruteforce_knn", 
             "-d", args.dataset,
             "-type", args.type,
@@ -101,7 +101,7 @@ def build_knn_graph(args, method="bruteforce"):
         ]
     elif method == "ivfflat":
         cmd = [
-           "./../../Project/Project/search",
+           "./../ergasia1/Project/search",
             "-ivfflat_knn", 
             "-d", args.dataset,
             "-type", args.type,
