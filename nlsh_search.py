@@ -150,8 +150,8 @@ def main():
     for part in sorted(inv_file.keys()):
         print(f"   Part {part}: {len(inv_file[part])} points")
 
-    print(">> Model architecture:")
-    print(model)
+    # print(">> Model architecture:")
+    # print(model)
 
     # Optional: δείξε το πρώτο layer
     first_layer = model.net[0]
