@@ -9,6 +9,7 @@ python3 nlsh_build1.py -d sift_data/sift_base.fvecs -i nlsh_index -type sift --k
 
 
 nlsh_search.py
- python3 nlsh_search.py -d sift_data/sift_base.fvecs -q sift_data/sift_query.fvecs -i nlsh_index -o output.txt -type sif
+ python3 nlsh_search.py -d sift_data/sift_base.fvecs -q sift_data/sift_query.fvecs -i nlsh_index -o output.txt -type sift
+python3 nlsh_search.py -d sift_data/sift_base.fvecs -q sift_data/sift_query.fvecs -i nlsh_index -o output.txt -type sift -N 1 -R 2800 -T 5 -range false
 
 deactivate
