@@ -1,3 +1,5 @@
+# Βήμα: Ακριβλης Αναζήτηση 
+
 import numpy as np
 # ---------------------------
 # TRUE exhaustive neighbors (numpy for whole-dataset)

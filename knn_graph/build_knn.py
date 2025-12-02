@@ -1,3 +1,5 @@
+#Βήμα: Κατασκευή Γράφου k-NN
+
 import subprocess
 import os
 from knn_graph.read_knn import read_knn_graph

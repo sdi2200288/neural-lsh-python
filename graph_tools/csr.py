@@ -1,3 +1,5 @@
+# Βήμα: Προετοιμασία Γράφου
+
 # 4. CONVERT TO CSR FOR KAHIP
 def to_csr(adj, n):
     print(">> Converting graph to CSR format...")

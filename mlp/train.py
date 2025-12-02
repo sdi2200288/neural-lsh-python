@@ -1,3 +1,5 @@
+# Βήμα: Εκπαίδευση Ταξινομητή (PyTorch)
+
 import torch
 def train_model(model, train_loader, val_loader, epochs, optimizer, criterion, device):
     """Εκπαίδευση μοντέλου με validation"""

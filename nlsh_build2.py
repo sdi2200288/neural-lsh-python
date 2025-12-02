@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 from kahip import kaffpa
-import subprocess
+# import subprocess
 import numpy as np
 import os
 import networkx as nx

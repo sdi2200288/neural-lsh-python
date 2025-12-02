@@ -1,3 +1,5 @@
+# Βήμα: Φωρτώνει Αρχειο από το index
+
 import os
 import torch 
 import numpy as np

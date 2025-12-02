@@ -1,3 +1,5 @@
+#Βήμα: Κατασκευή Γράφου k-NN
+
 def read_knn_graph(filename):
     """Read kNN graph from file"""
     graph = {}

@@ -1,3 +1,5 @@
+# Βήμα: Προετοιμασία Γράφου
+
 def check_graph_consistency(adj):
     """Έλεγχος ότι ο γράφος είναι συμμετρικός"""
     print(">> Checking graph consistency...")
