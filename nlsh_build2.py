@@ -89,7 +89,7 @@ def main():
         print(f"   Total edges: {total_edges}")
         
         # Αποθήκευση γραφικής αναπαράστασης (μόνο για μικρούς γράφους)
-        visualize_graph(adj)
+        # visualize_graph(adj)
 
         # Χρησιμοποιούμε τον πραγματικό αριθμό κόμβων του γράφου
         n_nodes = len(adj)
