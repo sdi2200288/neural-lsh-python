@@ -3,7 +3,7 @@
 import os
 import torch 
 import numpy as np
-from ..mlp.model import MLPClassifier 
+from mlp.model import MLPClassifier 
 
 # ---------------------------
 # UTIL: load index

@@ -49,8 +49,19 @@ def load_fvecs(path):
     return data[:, 1:].view(np.float32)
 
 def load_mnist(path):
-    """Φόρτωση MNIST dataset"""
-    # Προσαρμόστε ανάλογα με τη μορφή του MNIST dataset σας
-    data = np.fromfile(path, dtype=np.uint8)
-    # Υποθέτουμε 784 features per image (28x28)
-    return data.reshape(-1, 784).astype(np.float32) / 255.0  # Κανονικοποίηση
+    """Φόρτωση MNIST IDX3 αρχείου"""
+    with open(path, "rb") as f:
+        magic = np.frombuffer(f.read(4), dtype=">i4")[0]
+        if magic != 2051:
+            raise ValueError(f"Invalid MNIST image file magic number: {magic}")
+
+        num_images = np.frombuffer(f.read(4), dtype=">i4")[0]
+        rows = np.frombuffer(f.read(4), dtype=">i4")[0]
+        cols = np.frombuffer(f.read(4), dtype=">i4")[0]
+
+        # Διαβάζουμε ΟΛΑ τα pixel data
+        data = np.frombuffer(f.read(), dtype=np.uint8)
+
+    # reshape: num_images x (rows*cols)
+    data = data.reshape(num_images, rows * cols)
+    return data.astype(np.float32) / 255.0
