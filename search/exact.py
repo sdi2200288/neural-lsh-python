@@ -4,11 +4,10 @@ import numpy as np  #βιβλιοθήκη για υπολογιστικές πρ
 
 #συνάρτηση που υπολογίζει τους πραγματικούς N κοντινότερους γείτονες (exact search) με χρήση numpy
 def compute_true_neighbors_numpy(qvec, data, N):
-    """
-    qvec: numpy [d]
-    data: numpy [n, d]
-    returns: (top_indices [N], top_dists [N])
-    """
+    #qvec: numpy [d]
+    #data: numpy [n, d]
+    #returns: (top_indices [N], top_dists [N])
+
     #υπολογίσζει διανυσματικά τις διαφορές κάθε σημείου από το query
     #data -> [n,d], qvec -> [d] -> broadcasting -> αποτέλεσμα [n,d]
     diff = data - qvec  
