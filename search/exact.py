@@ -1,23 +1,26 @@
 # Βήμα: Ακριβλης Αναζήτηση 
 
-import numpy as np
-# ---------------------------
-# TRUE exhaustive neighbors (numpy for whole-dataset)
-# ---------------------------
+import numpy as np  #βιβλιοθήκη για υπολογιστικές πράξεις σε πίνακες 
+
+#συνάρτηση που υπολογίζει τους πραγματικούς N κοντινότερους γείτονες (exact search) με χρήση numpy
 def compute_true_neighbors_numpy(qvec, data, N):
     """
     qvec: numpy [d]
     data: numpy [n, d]
     returns: (top_indices [N], top_dists [N])
     """
-    # vectorized squared distances for speed
-    diff = data - qvec  # [n, d]
-    sq = np.sum(diff * diff, axis=1)
-    # get smallest N
-    if N >= len(sq):
+    #υπολογίσζει διανυσματικά τις διαφορές κάθε σημείου από το query
+    #data -> [n,d], qvec -> [d] -> broadcasting -> αποτέλεσμα [n,d]
+    diff = data - qvec  
+
+    sq = np.sum(diff * diff, axis=1)    #υπολογίζει το άθροισμα τετραγώνων ανά γραμμή και είναι μήκους n 
+    
+    #εύρεση των Ν μικρότερων αποστάσεων
+    if N >= len(sq):    #αν ζητάμε περισσότερα δείγματα απ' όσα υπάρχουν -> κάνουμε απλή ταξινόμηση         
         idx = np.argsort(sq)
-    else:
-        idx = np.argpartition(sq, N-1)[:N]
-        idx = idx[np.argsort(sq[idx])]
-    dists = np.sqrt(sq[idx])
-    return idx, dists
+    else:   #αλλιώς κάνουμε πολύ γρήγορη επιλογή των Ν μικρότερων χωρίς πλήρη ταξινόμηση 
+        idx = np.argpartition(sq, N-1)[:N]  #παίρνει N indices με μικρότερες αποστάσεις 
+        idx = idx[np.argsort(sq[idx])]      #ταξινόμηση μόνο αυτών των Ν ώστε να είναι στη σωστή σειρά
+
+    dists = np.sqrt(sq[idx])    #υπολογισμός πραγματικών αποστάσεων μόνο για τους επιλεγμένους Ν
+    return idx, dists           #επιστρέφει τους indices των Ν κοντινότερων γειτόνων και τις αντίστοιχες αποστάσεις
