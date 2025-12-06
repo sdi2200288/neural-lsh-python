@@ -1,105 +1,98 @@
 #!/usr/bin/env python3
-import argparse
-from kahip import kaffpa
-# import subprocess
-import numpy as np
-import os
-import networkx as nx
-import matplotlib.pyplot as plt
-import sys
+import argparse                     #βιβλιοθήκη για parsing των παραμέτρων από τη γραμμή εντολών 
+from kahip import kaffpa            #βιβλιοθήκη για KaHIP για partitioning γράφων
+import numpy as np                  #βιβλιοθήκη για αριθμητικές πράξεις με πίνακες 
+import os                           #βιβλιοθήκη για διαχείριση αρχείων και φακέλων
+import networkx as nx               #βιβλιοθήκη για εργαλεία για γράφους
+import sys                          #βιβλιοθήκη για αλληλεπίδραση με το σύστημα, stdout
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.utils.data import DataLoader, TensorDataset
+import torch                        #PyTorch για tensors και μοντέλα
+import torch.nn as nn               #modules νευρωνικών δικτύων
+import torch.nn.functional as F     #συναρτήσεις ενεργοποίησης, softmax
+from torch.utils.data import DataLoader, TensorDataset  #φόρτωση δεδομένων σε batches
 
-from knn_graph.build_knn import build_knn_graph
-from knn_graph.read_knn import read_knn_graph
-from graph_tools.symmetric import make_weighted_undirected
-from graph_tools.check import check_graph_consistency
-from graph_tools.csr import to_csr
-from graph_tools.visualize import visualize_graph
-from mlp.model import MLPClassifier
-from mlp.train import train_model
-from utils.dataset import load_dataset
-from utils.logger import OutputLogger
+from knn_graph.build_knn import build_knn_graph             #δημιουργία kNN γράφου             
+# from knn_graph.read_knn import read_knn_graph
+from graph_tools.symmetric import make_weighted_undirected  #μετατροπή γράφου σε weighted undirected
+from graph_tools.check import check_graph_consistency       #έλεγχος συνοχής γράφου
+from graph_tools.csr import to_csr                          #μετατροπή σε CSR μορφή
+# from graph_tools.visualize import visualize_graph
+from mlp.model import MLPClassifier                         #MLP μοντέλο
+from mlp.train import train_model                           #συνάρτηση εκπαίδευσης
+from utils.dataset import load_dataset                      #φόρτωση dataset
+from utils.logger import OutputLogger                       #ανακατεύθυνση output σε αρχείο
 
-# -------------------------------------------------------------
-# MAIN FUNCTION
-# -------------------------------------------------------------
+
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()                          #αρχικοποίηση parser για CLI flags
 
-    parser.add_argument("-d", dest="dataset", required=True)
-    parser.add_argument("-i", dest="index", required=True)
-    parser.add_argument("-type", dest="type", required=True)
+    #ορισμός παραμέτρων CLI
+    parser.add_argument("-d", dest="dataset", required=True)    #dataset path
+    parser.add_argument("-i", dest="index", required=True)      #φάκελος για index
+    parser.add_argument("-type", dest="type", required=True)    #τύπος δεδομένων dataset
 
-    parser.add_argument("--knn", type=int, default=10)
-    parser.add_argument("-m", type=int, default=100)
-    parser.add_argument("--imbalance", type=float, default=0.03)
-    parser.add_argument("--kahip_mode", type=int, default=2)
+    #παράμετροι για kNN και KaHIP
+    parser.add_argument("--knn", type=int, default=10)          #αριθμός γειτόνων στο knn
+    parser.add_argument("-m", type=int, default=100)            #αριθμός partitions για KaHIP / MLP output
+    parser.add_argument("--imbalance", type=float, default=0.03)#επιτρεπτή ανισορροπία partitions
+    parser.add_argument("--kahip_mode", type=int, default=2)    #mode για KaHIP
 
-    parser.add_argument("--layers", type=int, default=3)
-    parser.add_argument("--nodes", type=int, default=64)
-    parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--lr", type=float, default=0.001)
+    #παράμετροι MLP
+    parser.add_argument("--layers", type=int, default=3)        #αριθμός κρυφών layers
+    parser.add_argument("--nodes", type=int, default=64)        #πλήθος νευρώνων ανά κρυφό layer
+    parser.add_argument("--epochs", type=int, default=10)       #αριθμός εποχών εκπαίδευσης
+    parser.add_argument("--batch_size", type=int, default=128)  #μέγεθος batch
+    parser.add_argument("--lr", type=float, default=0.001)      #learning rate
 
-    parser.add_argument("--seed", type=int, default=1)
-    # Στο argparse του nlsh_build.py
-    parser.add_argument("--knn_method", choices=["bruteforce", "ivfflat"], default="bruteforce")
+    parser.add_argument("--seed", type=int, default=1)          #seed για αναπαραγωγή αποτελεσμάτων
+    parser.add_argument("--knn_method", choices=["bruteforce", "ivfflat"], default="bruteforce")    #μέθοδος kNN
 
-    args = parser.parse_args()
+    args = parser.parse_args()  #ανάγνωση παραμέτρων
 
-    # Ορισμός seed για reproducibility
-    torch.manual_seed(args.seed)
+    torch.manual_seed(args.seed)    #ορισμός seed για αναπαραγωγή αποτελεσμάτων
     np.random.seed(args.seed)
 
-    # Ανακατεύθυνση output σε αρχείο
+    #ανακατεύθυνση output σε αρχείο
     output_file = "nlsh_build_output.txt"
     output_logger = OutputLogger(output_file)
     sys.stdout = output_logger
     
     try:
+        #εκκίνηση διαδικασίας Neural LSH
         print("=" * 60)
         print("NEURAL LSH BUILD PROCESS STARTED")
         print("=" * 60)
         
-        # STEP 1: LOAD DATASET
+        #φόρτωση dataset
         print(f">> Loading dataset: {args.dataset}")
-        data = load_dataset(args.dataset, args.type)
-        n = data.shape[0]
-        d = data.shape[1]
+        data = load_dataset(args.dataset, args.type)    #φορτώνει τα δεδομένα 
+        n = data.shape[0]                               #πλήθος σημείων
+        d = data.shape[1]                               #διαστάσεις 
         print(f">> Dataset loaded: {n} vectors, {d} dimensions")
 
-        # STEP 2: BUILD kNN GRAPH USING C++
-        # knn_graph = build_knn_graph(args)
+        #δημιουργία kNN γράφου
         knn_graph = build_knn_graph(args, method=args.knn_method)
         print(f">> k-NN graph built with {len(knn_graph)} nodes")
 
-        # STEP 3: PREPARE GRAPH FOR KAHIP 
+        #προετοιμασία γράφου για KaHIP
         print(">> Making graph undirected and weighted...")
-        adj = make_weighted_undirected(knn_graph)
+        adj = make_weighted_undirected(knn_graph)   #μετατροπή γράφου σε weighted_undirected
 
-        check_graph_consistency(adj)
+        check_graph_consistency(adj)                #έ΄λεγχος συνοχής γράφου
         
         print(">> Graph structure summary:")
         print(f"   Total nodes: {len(adj)}")
         total_edges = sum(len(neighbors) for neighbors in adj.values()) // 2
         print(f"   Total edges: {total_edges}")
         
-        # Αποθήκευση γραφικής αναπαράστασης (μόνο για μικρούς γράφους)
         # visualize_graph(adj)
 
-        # Χρησιμοποιούμε τον πραγματικό αριθμό κόμβων του γράφου
+        #μετατροπή σε CSR μορφή για KaHIP
         n_nodes = len(adj)
         vwgt, xadj, adjncy, adjcwgt = to_csr(adj, n_nodes)
 
-        # ---------------------------------------------------------
-        # STEP 4: RUN KAHIP PARTITIONING
-        # ---------------------------------------------------------
+        #τρέχουμε το KaHIP
         print(">> Running KaHIP...")
-
         try:
             edgecut, partition = kaffpa(
                 vwgt,          # vertex weights
@@ -122,23 +115,20 @@ def main():
         print(f"   Edgecut = {edgecut}")
         print(f"   Partition vector size = {len(partition)}")
 
-        # Partition statistics
+        #partition statistics
         unique, counts = np.unique(partition, return_counts=True)
         print(">> Partition statistics:")
         for p, c in zip(unique, counts):
             print(f"   Part {p}: {c} nodes ({c/len(partition)*100:.2f}%)")
 
-        # ---------------------------------------------------------
-        # STEP 5: TRAIN THE MLP CLASSIFIER (ΔΙΟΡΘΩΜΕΝΟ)
-        # ---------------------------------------------------------
+        #εκπάιδευση MLP
         print(">> Preparing data for MLP training...")
-        
-        # ΔΙΟΡΘΩΣΗ: Δημιουργία labels για ΟΛΑ τα σημεία του dataset
-        # Υποθέτουμε ότι οι κόμβοι του γράφου αντιστοιχούν 1-1 με τα σημεία του dataset
+
+        #υποθέτουμε ότι οι κόμβοι του γράφου αντιστοιχούν 1-1 με τα σημεία του dataset
         if n_nodes != n:
             print(f"WARNING: Graph has {n_nodes} nodes but dataset has {n} points")
             print(f">> Using first {n_nodes} points for training")
-            # Χρησιμοποιούμε μόνο τα σημεία που έχουν partition labels
+            #χρησιμοποιούμε μόνο τα σημεία που έχουν partition labels
             X_data = data[:n_nodes]
             y_labels = partition
         else:
@@ -147,11 +137,11 @@ def main():
         
         print(f">> Final training data: {X_data.shape[0]} samples, {args.m} classes")
         
-        # Δημιουργία TensorDataset
+        #δημιουργία TensorDataset
         X_tensor = torch.tensor(X_data, dtype=torch.float32)
         y_tensor = torch.tensor(y_labels, dtype=torch.long)
         
-        # Split σε train/validation (80/20)
+        #split σε train/validation (80/20)
         dataset_size = len(X_tensor)
         indices = list(range(dataset_size))
         split = int(0.8 * dataset_size)
@@ -165,11 +155,11 @@ def main():
         train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
         
-        # Ορισμός συσκευής
+        #ορισμός συσκευής
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f">> Using device: {device}")
         
-        # Δημιουργία μοντέλου
+        #δημιουργία μοντέλου
         model = MLPClassifier(
             d_in=X_data.shape[1], 
             n_out=args.m,
@@ -179,11 +169,11 @@ def main():
         
         print(f">> MLP Model: {sum(p.numel() for p in model.parameters())} parameters")
         
-        # Ορισμός optimizer και loss function
+        #ορισμός optimizer και loss function
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
         criterion = nn.CrossEntropyLoss()
         
-        # Εκπαίδευση
+        #εκπαίδευση
         print(">> Starting MLP training...")
         train_losses, val_losses, train_accuracies, val_accuracies = train_model(
             model, train_loader, val_loader, args.epochs, optimizer, criterion, device
@@ -191,7 +181,7 @@ def main():
         
         print(">> Training completed.")
         
-        # Αποθήκευση μοντέλου
+        #αποθήκευση μοντέλου
         model_path = os.path.join(args.index, "model.pth")
         os.makedirs(args.index, exist_ok=True)
         torch.save({
@@ -203,12 +193,12 @@ def main():
         }, model_path)
         print(">> Saved model to", model_path)
         
-        # Αποθήκευση partition
+        #αποθήκευση partition
         part_path = os.path.join(args.index, "partition.npy")
         np.save(part_path, y_labels)
         print(f">> Partition saved to {part_path}")
         
-        # Αποθήκευση inverted file
+        #αποθήκευση inverted file
         print(">> Building inverted file...")
         inverted_file = {}
         for point_idx, part_label in enumerate(y_labels):
@@ -230,7 +220,7 @@ def main():
         traceback.print_exc()
     
     finally:
-        # Επαναφορά stdout
+        #επαναφορά stdout
         sys.stdout = output_logger.terminal
         output_logger.close()
         print(f">> All output has been saved to {output_file}")
