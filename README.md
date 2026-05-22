@@ -49,12 +49,6 @@ The algorithm operates in two phases:
 
 ## Tech Stack
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.9-red)
-![KaHIP](https://img.shields.io/badge/KaHIP-graph%20partitioning-orange)
-![NumPy](https://img.shields.io/badge/NumPy-data-lightgrey)
-![scikit--learn](https://img.shields.io/badge/scikit--learn-ML%20utils-lightgrey)
-
 - **Python 3.8+** — main language
 - **PyTorch** — MLP classifier training (GPU-accelerated if available)
 - **KaHIP** — balanced graph partitioning
