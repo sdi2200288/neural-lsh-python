@@ -15,7 +15,7 @@ It implements **Neural LSH** — a learned approximate nearest neighbor search a
 classical hash functions with a trained neural network. The system builds an index over high-dimensional
 vectors and supports fast multi-probe search at query time.
 
-This assignment extends the work from [Assignment 1](../), where LSH, Hypercube, IVFFlat and IVFPQ
+This assignment extends the work from [Assignment 1](../https://github.com/sdi2200288/vector-search-algorithms.git), where LSH, Hypercube, IVFFlat and IVFPQ
 were implemented in C++. The same datasets (MNIST, SIFT) and evaluation metrics (QPS, Recall, AF) are used,
 enabling direct performance comparison across all five algorithms.
 
