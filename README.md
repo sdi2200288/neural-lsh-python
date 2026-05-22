@@ -1,107 +1,200 @@
-# Ανάπτυξη Λογισμικού για Αλγοριθμικά Προβλήματα - 2η Προγραμματιστική Εργασία - Νευρωνικό LSH (Neural LSH) σε Python
+# 🧠 Neural LSH — Approximate Nearest Neighbor Search with Neural Networks
 
+> Combining k-NN graphs, graph partitioning (KaHIP), and MLP classifiers for learned vector indexing.
 
-## Στοιχεία Φοιτητών
-**Ομάδα:**
-1. Παπαθανασίου Ελένη - 1115202200135
-2. Τόντου Αλτάνη-Δάφνη - 1115202200288
+![Language](https://img.shields.io/badge/Language-Python%203.8%2B-blue)
+![Framework](https://img.shields.io/badge/Framework-PyTorch-red)
+![Partitioning](https://img.shields.io/badge/Partitioning-KaHIP-orange)
+![Dataset](https://img.shields.io/badge/Datasets-MNIST%20%7C%20SIFT-yellow)
+![Course](https://img.shields.io/badge/Course-Algorithm%20Development-purple)
+![Team](https://img.shields.io/badge/Team-2%20members-green)
 
-## Περιγρφή 
-Η παρούσα εργασία υλοποιεί τον αλγόριθμο Neural LSH (Neural Locality Sensitive Hashing) σε Python, ο οποίος συνδυάζει τεχνικές από τη θεωρία γράφων (k-NN γράφος),ισοκατανεμημένη διαμέριση(KaHIP) και νευρωνικά δίκτυα (MLP) για βελτιστοποιημένη προσεγγιστική αναζήτηση διανυσμάτων.
+---
 
-Το project αποτελείται από δύο κύρια προγράμματα:
-nlsh_build.py: Κατασκευή ευρετηρίου (όλες οι φάσεις εκπαίδευσης)
-nlsh_search.py: Αναζήτηση με χρήση του κατασκευασμένου ευρετηρίου
+## About This Project
 
-Κύρια βήματα αλγορίθμου:
-1. Κατασκευή γράφου k-NN από το σύνολο δεδομένων
-2. Μετατροπή σε μη κατευθυνόμενο ζυγισμένο γράφο
-3. Ισοκατανεμημένη διαμέριση KaHIP σε m μέρη
-4. Εκπαίδευση MLP ταξινομητή για πρόβλεψη partition labels 
-5. Αποθήκευση ευρετηρίου (μοντέλο + inverted file)
-6. Αναζήτηση με multi-probe τεχνική
+This is the **2nd Programming Assignment** for the course *"Software Development for Algorithmic Problems"*.
 
+It implements **Neural LSH** — a learned approximate nearest neighbor search algorithm that replaces
+classical hash functions with a trained neural network. The system builds an index over high-dimensional
+vectors and supports fast multi-probe search at query time.
 
-## Κατάλογος Αρχείων
-## Κύρια Προγράμματα
-1. **nlsh_build.py**  : κατασκευή ευρετηρίου Neural LSH
-2. **nlsh_search.py** : αναζήτηση με Neural LSH
+This assignment extends the work from [Assignment 1](../), where LSH, Hypercube, IVFFlat and IVFPQ
+were implemented in C++. The same datasets (MNIST, SIFT) and evaluation metrics (QPS, Recall, AF) are used,
+enabling direct performance comparison across all five algorithms.
 
-### Βοηθητικά modules -> **knn_graph/**
+---
 
-1. **build_knn.py**   :κατασκευή γράφου k-πλησιέστερων γειτόνων
-2. **read_knn.py**    : ανάγνωση γράφου k-NN
+## Team
 
-###                   -> **graph_tools/**
-3. **symmetric.py**   : μετατροπή σε μη κατευθυνόμενο γράφο με βάρη
-4. **check.py**       : έλεγχος συνοχής γράφου
-5. **csr.py**         : μετατροπή σε μορφή CSR για KaHIP
+| Name | Student ID |
+|------|-----------|
+| Παπαθανασίου Ελένη | 1115202200135 |
+| Τόντου Αλτάνη-Δάφνη | 1115202200288 |
 
-###                   -> **mlp/**
-6. **model.py**       : ορισμός μοντέλου MLP ταξινομητή
-7. **train.py**       : συναρτήσεις εκπαίδευσης MLP 
+---
 
-###                   -> **search/**
-8. **loader.py**      : φόρτωση ευρετηρίου και υπολογισμός αποστάσεων
-9. **exact.py**       : ακριβής αναζήτηση για baseline 
+## How Neural LSH Works
 
-###                   -> **utils/**
-10. **dataset.py**      : φόρτωση συνόλων δεδομένων (MNIST/SIFT) αποστάσεων
-11. **logger.py**       : καταγραφή εξόδου σε αρχείο 
+The algorithm operates in two phases:
 
-### Επιπλέον αρχεία
-**requirements.txt** - Κατάλογος εξαρτήσεων Python
+**Build phase** (`nlsh_build.py`):
+1. Construct a **k-NN graph** from the dataset
+2. Convert to an **undirected weighted graph**
+3. Partition into `m` balanced parts using **KaHIP**
+4. Train an **MLP classifier** to predict partition labels
+5. Save index (model + inverted file structure)
 
-## Οδηγίες Εγκατάστασης
+**Search phase** (`nlsh_search.py`):
+6. Load the saved index
+7. Query using **multi-probe** technique across partitions
 
-# Δημιουργία και ενεργοποίηση virtual environment
-    python3 -m venv venv
-    source venv/bin/activate
-# Εγκατάσταση βασικών εξαρτήσεων
-    pip install torch numpy matplotlib networkx
-# Εγκατάσταση KaHIP για διαμέριση γράφων
-    pip install kahip
-# Επιπλέον βιβλιοθήκες
-    pip install scipy scikit-learn pandas seaborn
-# Εναλλακτικά, εγκατάσταση όλων των εξαρτήσεων
-    pip install -r requirements.txt
+---
 
+## Tech Stack
 
-## Οδηγίες Χρήσης
-# Σενάριο 1: Κατασκευή Ευρετηρίου (Build)
-python nlsh_build.py -d <input_file> -i <index_path> -type <sift|mnist>
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.9-red)
+![KaHIP](https://img.shields.io/badge/KaHIP-graph%20partitioning-orange)
+![NumPy](https://img.shields.io/badge/NumPy-data-lightgrey)
+![scikit--learn](https://img.shields.io/badge/scikit--learn-ML%20utils-lightgrey)
 
-# Σενάριο 2: Αναζήτηση (Search)
-python nlsh_search.py -d <dataset> -q <query_file> -i <index_path> -o <output_file> -type <sift|mnist>
+- **Python 3.8+** — main language
+- **PyTorch** — MLP classifier training (GPU-accelerated if available)
+- **KaHIP** — balanced graph partitioning
+- **NumPy / SciPy / scikit-learn** — data processing
+- **Matplotlib / Seaborn** — visualization
+- **Makefile** — unified build and run system
 
-## Συμβατότητα με 1η Εργασία
-1. Χρησιμοποιούνται τα ίδια datasets (MNIST, SIFT)
-2. Η ίδια μορφή αρχείων εισόδου/εξόδου
-3. Δυνατότητα άμεσης σύγκρισης με LSH, Hypercube, IVFFlat, IVFPQ
+---
 
+## Project Structure
 
-## Οδηγίες Μεταγλώττισης και Εκτέλεσης
-Αρχικά, για την εγκατάσταση των απαραίτητων βιβλιοθηκών εκτελούμε την εντολή **make setup**.
-Στη συνέχεια, για να εκτελέσουμε πλήρως τον αλγόριθμο Neural LSH για το SIFT dataset χρησιμοποιούμε την εντολή **make run_sift**.
-Αν θέλουμε να εκτελέσουμε πλήρως τον αλγόριθμο Neural LSH για το MNIST dataset χρησιμοποιούμε την εντολή **make run_mnist**.
-Για να εκτελέσουμε την πειραματική ανάλυση με τις ακριβείς παραμέτρους από την εκφώνηση για το SIFT, χρησιμοποιούμε την εντολή **make run_exact_sift**.
-Για να εκτελέσουμε την πειραματική ανάλυση με τις ακριβείς παραμέτρους από την εκφώνηση για το MNIST, χρησιμοποιούμε την εντολή **make run_exact_mnist**.
-Για να εκτελέσουμε μόνο τη φάση της κατασκευής του ευρετηρίου για το SIFT χρησιμοποιούμε την εντολή **make build_sift**.
-Για να εκτελέσουμε μόνο τη φάση της αναζήτησης για το SIFT χρησιμοποιούμε την εντολή **make search_sift**.
-Για να εκτελέσουμε μόνο τη φάση της κατασκευής του ευρετηρίου για το MNIST χρησιμοποιούμε την εντολή **make build_mnist**.
-Για να εκτελέσουμε μόνο τη φάση της αναζήτησης για το MNIST χρησιμοποιούμε την εντολή **make search_mnist**.
-Για να διαγράψουμε τα παραγόμενα αρχεία χρησιμοποιούμε την εντολή **make clean_all**.
-Για να εμφανίσουμε όλες τις διαθέσιμες εντολές του Makefile χρησιμοποιούμε την εντολή **make help**
+```
+📄 nlsh_build.py          → Index construction (all training phases)
+📄 nlsh_search.py         → Search using the built index
 
+📁 knn_graph/
+   ├── build_knn.py        → Build k-nearest neighbor graph
+   └── read_knn.py         → Read k-NN graph from file
 
+📁 graph_tools/
+   ├── symmetric.py        → Convert to undirected weighted graph
+   ├── check.py            → Graph consistency checks
+   └── csr.py              → Convert to CSR format for KaHIP
 
-## Απαιτήσεις Συστήματος
-1. **Python 3.8+** με pip package manager
-2. **PyTorch (>= 1.9.0)** για νευρωνικά δίκτυα
-3. **KaHIP Python** bindings για διαμέριση γράφων
-4. **NumPy, SciPy, scikit-learn** για επεξεργασία δεδομένων
-5. **Matplotlib, Seaborn** για οπτικοποίηση
-6. Επαρκής μνήμη **RAM** (16GB+ για μεγάλα datasets)
-7. Προαιρετικά: **CUDA-enabled GPU** για επιτάχυνση εκπαίδευσης
+📁 mlp/
+   ├── model.py            → MLP classifier architecture
+   └── train.py            → Training loop and utilities
 
+📁 search/
+   ├── loader.py           → Load index & compute distances
+   └── exact.py            → Exact search (baseline)
+
+📁 utils/
+   ├── dataset.py          → MNIST / SIFT dataset loader
+   └── logger.py           → Output logging
+
+📄 requirements.txt
+📄 Makefile
+```
+
+---
+
+## Installation
+
+```bash
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install all dependencies
 pip install -r requirements.txt
+```
+
+Or manually:
+
+```bash
+pip install torch numpy matplotlib networkx
+pip install kahip
+pip install scipy scikit-learn pandas seaborn
+```
+
+---
+
+## Build & Run
+
+### Full pipeline
+
+```bash
+make setup          # install dependencies
+
+make run_sift       # full Neural LSH pipeline on SIFT
+make run_mnist      # full Neural LSH pipeline on MNIST
+```
+
+### Exact experiment parameters (from assignment spec)
+
+```bash
+make run_exact_sift
+make run_exact_mnist
+```
+
+### Build and search separately
+
+```bash
+make build_sift     # index construction only (SIFT)
+make search_sift    # search only (SIFT)
+
+make build_mnist    # index construction only (MNIST)
+make search_mnist   # search only (MNIST)
+```
+
+### Utilities
+
+```bash
+make clean_all      # remove generated files
+make help           # list all available commands
+```
+
+---
+
+### Manual usage
+
+```bash
+# Build index
+python nlsh_build.py -d  -i  -type 
+
+# Search
+python nlsh_search.py -d  -q  -i  -o  -type 
+```
+
+---
+
+## System Requirements
+
+- **OS:** Linux
+- **Python:** 3.8+
+- **RAM:** 16GB+ recommended for large datasets
+- **GPU:** Optional — CUDA-enabled GPU accelerates MLP training
+
+---
+
+## Key Concepts Demonstrated
+
+- Graph-based indexing for Approximate Nearest Neighbor search
+- Balanced graph partitioning with KaHIP
+- MLP classifier training with PyTorch (supervised learning on graph structure)
+- Multi-probe search strategy for improved recall
+- Comparison with classical ANN methods (LSH, Hypercube, IVFFlat, IVFPQ)
+- Modular Python project design with virtual environments
+
+---
+
+## Related
+
+- [Assignment 1 — C++ ANN Search (LSH, Hypercube, IVFFlat, IVFPQ)](../Project)
+
+---
+
+*2nd Programming Assignment · Software Development for Algorithmic Problems*
