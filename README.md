@@ -3,10 +3,6 @@
 > Combining k-NN graphs, graph partitioning (KaHIP), and MLP classifiers for learned vector indexing.
 
 ![Language](https://img.shields.io/badge/Language-Python%203.8%2B-blue)
-![Framework](https://img.shields.io/badge/Framework-PyTorch-red)
-![Partitioning](https://img.shields.io/badge/Partitioning-KaHIP-orange)
-![Dataset](https://img.shields.io/badge/Datasets-MNIST%20%7C%20SIFT-yellow)
-![Course](https://img.shields.io/badge/Course-Algorithm%20Development-purple)
 ![Team](https://img.shields.io/badge/Team-2%20members-green)
 
 ---
